@@ -1,0 +1,57 @@
+title: SEO
+fields:
+  -
+    handle: seo_title
+    field:
+      type: text
+      display: 'SEO Title'
+      localizable: true
+      instructions: 'Overrides the page title in search results. Leave blank to use the entry title.'
+  -
+    handle: seo_description
+    field:
+      type: textarea
+      display: 'Meta Description'
+      localizable: true
+      instructions: 'Shown under the title in Google. Around 155 characters works best.'
+  -
+    handle: seo_image
+    field:
+      type: assets
+      max_files: 1
+      display: 'Social Share Image'
+      localizable: true
+      instructions: 'Image used when the page is shared on social media (Open Graph / Twitter).'
+  -
+    handle: seo_canonical
+    field:
+      type: text
+      display: 'Canonical URL'
+      localizable: true
+      instructions: 'Optional. Leave blank to self-reference this page.'
+  -
+    handle: seo_noindex
+    field:
+      type: toggle
+      display: 'Hide from search engines (noindex)'
+      localizable: true
+  -
+    handle: seo_schema_type
+    field:
+      type: select
+      display: 'Schema type'
+      localizable: true
+      default: default
+      instructions: 'Structured-data type for this page. Use the override box below for advanced types (Product, FAQ, Event, …).'
+      options:
+        default: 'Default (Article)'
+        Article: Article
+        BlogPosting: 'Blog Posting'
+  -
+    handle: seo_schema_json
+    field:
+      type: code
+      mode: javascript
+      display: 'Schema JSON-LD override'
+      localizable: true
+      instructions: 'Optional. Paste raw JSON-LD (a single object, an array, or a @graph). When set, it replaces the auto-generated node. Invalid JSON is ignored.'

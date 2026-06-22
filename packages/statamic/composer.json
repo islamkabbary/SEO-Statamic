@@ -1,0 +1,44 @@
+{
+    "name": "silaseo/statamic",
+    "description": "Statamic bridge for SilaSEO: per-entry SEO fields, entry->meta mapping, JSON-LD, hreflang, and a version gateway (v4/v5/v6).",
+    "type": "statamic-addon",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.1",
+        "silaseo/core": "@dev",
+        "silaseo/laravel": "@dev",
+        "statamic/cms": "^4.0 || ^5.0 || ^6.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SilaSeo\\Statamic\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SilaSeo\\Statamic\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "statamic": {
+            "name": "SilaSeo",
+            "description": "In-house SEO toolkit for Statamic."
+        },
+        "laravel": {
+            "providers": [
+                "SilaSeo\\Statamic\\ServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pixelfear/composer-dist-plugin": true
+        }
+    }
+}
