@@ -26,14 +26,12 @@
     },
     "autoload": {
         "psr-4": {
-            "SilaSeo\\": "src/",
-            "SilaSeo\\Core\\": "src/Core/",
-            "SilaSeo\\Laravel\\": "src/Laravel/",
-            "SilaSeo\\Statamic\\": "src/Statamic/"
+            "SilaSeo\\": "lib/",
+            "SilaSeo\\Statamic\\": "src/"
         },
         "files": [
-            "src/Laravel/helpers.php",
-            "src/Statamic/helpers.php"
+            "lib/Laravel/helpers.php",
+            "src/helpers.php"
         ]
     },
     "autoload-dev": {

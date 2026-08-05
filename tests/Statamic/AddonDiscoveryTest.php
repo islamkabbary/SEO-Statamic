@@ -63,15 +63,84 @@ final class AddonDiscoveryTest extends TestCase
         );
 
         $autoload = $psr4[$namespace . '\\'];
-        $providerFile = dirname(__DIR__, 2) . '/' . $autoload . 'ServiceProvider.php';
-        self::assertFileExists($providerFile, 'The first provider must resolve through its own psr-4 path.');
+        $root = dirname(__DIR__, 2) . '/';
 
-        $directory = str_replace('\\', '/', dirname($providerFile));
-        $suffix = rtrim($autoload, '/');
+        // Deliberately not reflected: loading the provider would pull in
+        // Statamic\Providers\AddonServiceProvider, and this suite runs without
+        // statamic/cms installed. The path is what matters, not the class.
+        self::assertFileExists(
+            $root . $autoload . 'ServiceProvider.php',
+            "The first provider must live at its own psr-4 path ({$autoload}).",
+        );
 
-        self::assertStringEndsWith($suffix, $directory);
+        return $root;
+    }
 
-        return substr($directory, 0, -strlen($suffix));
+    /**
+     * Addon::directory() does:
+     *     Str::removeRight(dirname($reflector->getFileName()), rtrim($autoload, '/'))
+     *
+     * dirname() yields the platform separator -- backslashes on Windows -- while a
+     * psr-4 value always uses forward slashes. The strip is a plain suffix compare,
+     * so it only survives both platforms when the psr-4 value has no separator to
+     * disagree about.
+     */
+    public function test_the_addon_root_is_derived_correctly_on_every_platform(): void
+    {
+        $package = $this->composerJson();
+        $provider = $package['extra']['laravel']['providers'][0];
+        $namespace = implode('\\', explode('\\', $provider, -1));
+        $suffix = rtrim($package['autoload']['psr-4'][$namespace . '\\'], '/');
+
+        foreach (['/' => '/var/www/vendor/silaseo/seo', '\\' => 'C:\\sites\\vendor\\silaseo\\seo'] as $separator => $installPath) {
+            $providerDirectory = $installPath . $separator . str_replace('/', $separator, $suffix);
+
+            $stripped = str_ends_with($providerDirectory, $suffix)
+                ? substr($providerDirectory, 0, -strlen($suffix))
+                : $providerDirectory;
+
+            self::assertSame(
+                $installPath . $separator,
+                $stripped,
+                sprintf(
+                    'Addon root resolves to "%s" instead of the package root when the '
+                    . 'separator is "%s". Statamic would then look for views, translations, '
+                    . 'publishables and the Vite manifest inside the namespace directory; on '
+                    . 'Statamic 5/6 that also leaves registerVite() publishing from a path '
+                    . 'that does not exist, surfacing as ViteManifestNotFoundException on '
+                    . 'every Control Panel page.',
+                    $stripped,
+                    $separator,
+                ),
+            );
+        }
+    }
+
+    public function test_the_first_provider_psr4_path_is_a_single_path_segment(): void
+    {
+        $package = $this->composerJson();
+        $provider = $package['extra']['laravel']['providers'][0];
+        $namespace = implode('\\', explode('\\', $provider, -1));
+        $autoload = rtrim($package['autoload']['psr-4'][$namespace . '\\'], '/');
+
+        // Addon::directory() does:
+        //     Str::removeRight(dirname($reflector->getFileName()), rtrim($autoload, '/'))
+        // dirname() returns the platform separator -- backslashes on Windows -- while
+        // the psr-4 value always uses forward slashes. A multi-segment value like
+        // "src/Statamic" therefore never matches the tail of "…\src\Statamic", the
+        // strip silently no-ops, and directory() points at the namespace root instead
+        // of the package root. On Statamic 5/6 that also makes shouldBootRootItems()
+        // false and leaves registerVite() publishing from a path that does not exist,
+        // which surfaces as ViteManifestNotFoundException on every Control Panel page.
+        //
+        // A single segment has no separator to disagree about, so it strips
+        // identically on both platforms. Development here is on Windows.
+        self::assertStringNotContainsString(
+            '/',
+            $autoload,
+            'The first provider\'s psr-4 path must be a single directory name, or '
+            . 'addon discovery breaks on Windows.',
+        );
     }
 
     public function test_the_first_provider_namespace_has_an_explicit_psr4_key(): void

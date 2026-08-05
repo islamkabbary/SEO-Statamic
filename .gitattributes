@@ -5,6 +5,7 @@
 * text=auto eol=lf
 
 *.php       text eol=lf
+*.stub      text eol=lf
 *.blade.php text eol=lf
 *.js        text eol=lf
 *.vue       text eol=lf
