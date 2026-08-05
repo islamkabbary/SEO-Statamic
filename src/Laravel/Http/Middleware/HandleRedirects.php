@@ -6,6 +6,7 @@ namespace SilaSeo\Laravel\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use SilaSeo\Core\Support\RedirectTarget;
 use SilaSeo\Laravel\Redirects\RedirectRepository;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -27,15 +28,26 @@ final class HandleRedirects
             $rule = $this->redirects->find($request->path());
 
             if ($rule !== null) {
-                $this->redirects->recordHit($request->path());
-
+                // 410 is terminal, not a redirect, so it is settled before the
+                // loop guard -- a gone rule on the site root has no target to
+                // compare and must still return 410.
                 if ($rule['status'] === 410) {
+                    $this->redirects->recordHit($request->path());
+
                     abort(410);
                 }
 
-                $status = in_array($rule['status'], self::REDIRECT_STATUSES, true) ? $rule['status'] : 301;
+                $to = (string) ($rule['to'] ?? '');
 
-                return redirect()->to($rule['to'] ?? '/', $status);
+                // A rule pointing at its own source would bounce the browser until
+                // it gives up. Fall through to the app instead of taking the URL down.
+                if (! RedirectTarget::pointsAtSelf($to, $request->path(), $request->getHost())) {
+                    $this->redirects->recordHit($request->path());
+
+                    $status = in_array($rule['status'], self::REDIRECT_STATUSES, true) ? $rule['status'] : 301;
+
+                    return redirect()->to($to ?: '/', $status);
+                }
             }
         }
 

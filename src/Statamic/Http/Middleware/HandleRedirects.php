@@ -6,6 +6,7 @@ namespace SilaSeo\Statamic\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use SilaSeo\Core\Support\RedirectTarget;
 use SilaSeo\Statamic\Redirects\GlobalRedirectStore;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -31,9 +32,15 @@ final class HandleRedirects
                     abort(410);
                 }
 
-                $status = in_array($rule['status'], self::REDIRECT_STATUSES, true) ? $rule['status'] : 301;
+                $to = (string) ($rule['to'] ?? '');
 
-                return redirect($rule['to'] ?: '/', $status);
+                // A rule pointing at its own source would bounce the browser until
+                // it gives up. Fall through to the app instead of taking the URL down.
+                if (! RedirectTarget::pointsAtSelf($to, $request->path(), $request->getHost())) {
+                    $status = in_array($rule['status'], self::REDIRECT_STATUSES, true) ? $rule['status'] : 301;
+
+                    return redirect($to ?: '/', $status);
+                }
             }
         }
 
