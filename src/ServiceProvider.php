@@ -10,6 +10,7 @@ use SilaSeo\Statamic\Gateway\StatamicGateway;
 use SilaSeo\Statamic\Gateway\VersionGate;
 use SilaSeo\Statamic\IndexNow\SubmitEntryToIndexNow;
 use SilaSeo\Statamic\Link\EntryLinkCorpus;
+use SilaSeo\Statamic\Support\AssetStrategy;
 use SilaSeo\Statamic\Support\Icons;
 use SilaSeo\Statamic\Tags\SeoTag;
 use Statamic\Events\EntryDeleted;
@@ -34,14 +35,13 @@ class ServiceProvider extends AddonServiceProvider
     ];
 
     /**
-     * @var array{input: list<string>, publicDirectory: string}
+     * Assigned in {@see register()} rather than here: the committed bundle only
+     * runs on Statamic 6, and AddonServiceProvider reads this property while
+     * booting, which is after register().
+     *
+     * @var array{input: list<string>, publicDirectory: string}|null
      */
-    protected $vite = [
-        'input' => [
-            'resources/js/cp.js',
-        ],
-        'publicDirectory' => 'resources/dist',
-    ];
+    protected $vite = null;
 
     /**
      * @var array<string,string>
@@ -51,8 +51,30 @@ class ServiceProvider extends AddonServiceProvider
         'web' => __DIR__ . '/../routes/web.php',
     ];
 
+    /**
+     * @var array{input: list<string>, publicDirectory: string}
+     */
+    private const VITE_CONFIG = [
+        'input' => [
+            'resources/js/cp.js',
+        ],
+        'publicDirectory' => 'resources/dist',
+    ];
+
     public function register(): void
     {
+        // The Control Panel bundle is compiled against Statamic 6 -- it reads the
+        // __STATAMIC__ global and Vue 3 APIs, neither of which exists in the Vue 2.7
+        // Control Panel of Statamic 4 and 5. Registering it there would fail at load.
+        //
+        // $fieldtypes is deliberately NOT gated the same way: an unregistered handle
+        // makes FieldtypeRepository::find() throw, which would break the publish form
+        // of every blueprint importing the SEO fieldset. SeoReport degrades to a
+        // display-only component instead.
+        if (AssetStrategy::current()->shipsVueComponents()) {
+            $this->vite = self::VITE_CONFIG;
+        }
+
         parent::register();
 
         $this->app->singleton(StatamicGateway::class, static fn (): StatamicGateway => VersionGate::driver());
