@@ -5,7 +5,13 @@ declare(strict_types=1);
 namespace SilaSeo\Statamic;
 
 use Illuminate\Support\Facades\Event;
+use SilaSeo\Statamic\Fields\EntryValueReader;
+use SilaSeo\Statamic\Fields\FieldMap;
+use SilaSeo\Statamic\Fields\FieldResolver;
+use SilaSeo\Statamic\Fields\ProfileFactory;
+use SilaSeo\Statamic\Fields\ValueReader;
 use SilaSeo\Statamic\Fieldtypes\SeoReport;
+use SilaSeo\Statamic\Locale\LocaleStrategy;
 use SilaSeo\Statamic\Gateway\StatamicGateway;
 use SilaSeo\Statamic\Gateway\VersionGate;
 use SilaSeo\Statamic\IndexNow\SubmitEntryToIndexNow;
@@ -77,7 +83,31 @@ class ServiceProvider extends AddonServiceProvider
 
         parent::register();
 
-        $this->app->singleton(StatamicGateway::class, static fn (): StatamicGateway => VersionGate::driver());
+        $this->app->singleton(ValueReader::class, EntryValueReader::class);
+
+        $this->app->singleton(ProfileFactory::class, static fn ($app): ProfileFactory => new ProfileFactory(
+            (array) $app['config']->get('silaseo.statamic', []),
+        ));
+
+        $this->app->singleton(FieldMap::class, static fn ($app): FieldMap => $app->make(ProfileFactory::class)->map());
+
+        // Request-scoped: the prefix strategy reads the locale off the current URL,
+        // so it must not survive into the next request under Octane.
+        $this->app->scoped(LocaleStrategy::class, static fn ($app): LocaleStrategy => $app
+            ->make(ProfileFactory::class)
+            ->localeStrategy($app->make(ValueReader::class)));
+
+        $this->app->scoped(FieldResolver::class, static fn ($app): FieldResolver => new FieldResolver(
+            $app->make(FieldMap::class),
+            $app->make(ValueReader::class),
+            $app->make(LocaleStrategy::class),
+        ));
+
+        // Scoped, not singleton: the reader carries the request's locale strategy.
+        $this->app->scoped(StatamicGateway::class, static fn ($app): StatamicGateway => VersionGate::driver(
+            $app->make(FieldResolver::class),
+            $app->make(LocaleStrategy::class),
+        ));
         $this->app->singleton(EntryMapper::class);
         $this->app->scoped(EntrySeo::class);
     }

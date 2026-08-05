@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SilaSeo\Statamic\Gateway;
 
+use SilaSeo\Statamic\Fields\AssetUrl;
+use SilaSeo\Statamic\Fields\FieldResolver;
+use SilaSeo\Statamic\Locale\LocaleStrategy;
 use Throwable;
 
 /**
@@ -16,25 +19,49 @@ use Throwable;
  */
 final class V6Driver implements StatamicGateway
 {
+    public function __construct(
+        private readonly ?FieldResolver $resolver = null,
+        private readonly ?LocaleStrategy $locale = null,
+    ) {
+    }
+
     public function extract(object $entry, string $schemaType): array
     {
+        // Every field read goes through the resolver, so a project whose meta
+        // description lives in `description` and whose Arabic copy lives in
+        // `description_ar` is served without renaming any content. The legacy
+        // hardcoded reads remain only as the no-resolver fallback.
+        $resolver = $this->resolver;
+        $locale = $this->locale?->current() ?? $this->locale($entry);
+
         return [
             'fields' => [
-                'seo_title' => $this->raw($entry, 'seo_title'),
-                'seo_description' => $this->raw($entry, 'seo_description'),
-                'seo_canonical' => $this->raw($entry, 'seo_canonical'),
-                'seo_image' => $this->assetUrl($entry, 'seo_image'),
-                'noindex' => (bool) $this->raw($entry, 'seo_noindex'),
-                'schema_json' => $this->raw($entry, 'seo_schema_json'),
+                'seo_title' => $resolver?->string($entry, 'title', $locale) ?? $this->raw($entry, 'seo_title'),
+                'seo_description' => $resolver?->string($entry, 'description', $locale) ?? $this->raw($entry, 'seo_description'),
+                'seo_canonical' => $resolver?->string($entry, 'canonical', $locale) ?? $this->raw($entry, 'seo_canonical'),
+                'seo_image' => $resolver?->assetUrl($entry, 'image', $locale) ?? $this->assetUrl($entry, 'seo_image'),
+                // An unmapped robots key is false, never a stray read: a project
+                // without a noindex toggle must not have pages silently deindexed.
+                'noindex' => $resolver !== null
+                    ? $resolver->bool($entry, 'robots', $locale)
+                    : (bool) $this->raw($entry, 'seo_noindex'),
+                'schema_json' => $resolver?->string($entry, 'schema_json', $locale) ?? $this->raw($entry, 'seo_schema_json'),
             ],
             'context' => [
-                'fallback_title' => $this->raw($entry, 'title'),
+                'fallback_title' => $resolver?->string($entry, 'title', $locale) ?? $this->raw($entry, 'title'),
                 'fallback_image' => null,
                 'url' => $this->url($entry),
-                'locale' => $this->locale($entry),
-                'schema_type' => $this->firstFilled($this->raw($entry, 'seo_schema_type'), $schemaType),
+                'locale' => $locale,
+                'schema_type' => $this->firstFilled(
+                    $resolver?->string($entry, 'schema_type', $locale) ?? $this->raw($entry, 'seo_schema_type'),
+                    $schemaType,
+                ),
             ],
-            'alternates' => $this->alternates($entry),
+            // Delegated: which pages count as existing translations is a property
+            // of the project's content model, not of the Statamic version.
+            'alternates' => $this->locale !== null && $resolver !== null
+                ? $this->locale->alternatesFor($entry, $resolver->map())
+                : $this->alternates($entry),
         ];
     }
 
@@ -65,24 +92,15 @@ final class V6Driver implements StatamicGateway
     private function assetUrl(object $entry, string $handle): ?string
     {
         try {
-            $value = $entry->augmentedValue($handle)->value();
-
-            if (is_object($value) && method_exists($value, 'first')) {
-                $value = $value->first();
-            }
-
-            if (is_object($value) && method_exists($value, 'absoluteUrl')) {
-                return $value->absoluteUrl();
-            }
-
-            if (is_object($value) && method_exists($value, 'url')) {
-                return $value->url();
-            }
+            // Delegated so the multi-asset case is handled. The old inline guard
+            // probed method_exists($value, 'first'), which is FALSE for
+            // Statamic\Assets\OrderedQueryBuilder -- it reaches first() through
+            // __call -- so every assets field with max_files !== 1 silently
+            // resolved to null and the page emitted no og:image at all.
+            return AssetUrl::from($entry->augmentedValue($handle)->value());
         } catch (Throwable) {
-            // Fall through to null.
+            return null;
         }
-
-        return null;
     }
 
     private function url(object $entry): ?string
