@@ -21,7 +21,10 @@
     },
     "autoload": {
         "psr-4": {
-            "SilaSeo\\": "src/"
+            "SilaSeo\\": "src/",
+            "SilaSeo\\Core\\": "src/Core/",
+            "SilaSeo\\Laravel\\": "src/Laravel/",
+            "SilaSeo\\Statamic\\": "src/Statamic/"
         },
         "files": [
             "src/Laravel/helpers.php",
@@ -38,8 +41,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "SilaSeo\\Laravel\\SilaSeoServiceProvider",
-                "SilaSeo\\Statamic\\ServiceProvider"
+                "SilaSeo\\Statamic\\ServiceProvider",
+                "SilaSeo\\Laravel\\SilaSeoServiceProvider"
             ],
             "aliases": {
                 "Seo": "SilaSeo\\Laravel\\Facades\\Seo"

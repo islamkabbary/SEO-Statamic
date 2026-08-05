@@ -10,6 +10,7 @@ use SilaSeo\Statamic\Gateway\StatamicGateway;
 use SilaSeo\Statamic\Gateway\VersionGate;
 use SilaSeo\Statamic\IndexNow\SubmitEntryToIndexNow;
 use SilaSeo\Statamic\Link\EntryLinkCorpus;
+use SilaSeo\Statamic\Support\Icons;
 use SilaSeo\Statamic\Tags\SeoTag;
 use Statamic\Events\EntryDeleted;
 use Statamic\Events\EntrySaved;
@@ -87,12 +88,12 @@ class ServiceProvider extends AddonServiceProvider
             $nav->create(__('silaseo::messages.redirects_title'))
                 ->section('SEO')
                 ->route('silaseo.redirects')
-                ->icon('arrow-roadmap-path-flow');
+                ->icon(Icons::REDIRECTS);
 
             $nav->create(__('silaseo::messages.notfound_title'))
                 ->section('SEO')
                 ->route('silaseo.404-log')
-                ->icon('alert-warning-exclamation-mark');
+                ->icon(Icons::NOT_FOUND);
         });
     }
 }
