@@ -19,6 +19,11 @@
     "suggest": {
         "khaled.alshamaa/ar-php": "Improved Arabic content analysis: readability, harakat/alef normalization, slug transliteration."
     },
+    "replace": {
+        "silaseo/core": "self.version",
+        "silaseo/laravel": "self.version",
+        "silaseo/statamic": "self.version"
+    },
     "autoload": {
         "psr-4": {
             "SilaSeo\\": "src/",
