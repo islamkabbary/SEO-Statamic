@@ -1,0 +1,29 @@
+# Normalise to LF in the repository regardless of the checkout platform.
+# Development happens on Windows while every host runs Linux; without this,
+# a whole-file CRLF delta hides real drift. Auditing the three deployed copies
+# for divergence required diffing with --strip-trailing-cr to see anything at all.
+* text=auto eol=lf
+
+*.php       text eol=lf
+*.blade.php text eol=lf
+*.js        text eol=lf
+*.vue       text eol=lf
+*.json      text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.neon      text eol=lf
+*.md        text eol=lf
+*.xml       text eol=lf
+
+# Built Control Panel assets are shipped as-is; never touch their bytes.
+resources/dist/**   -text -diff linguist-generated
+
+# Keep the distributed package lean -- none of this is needed at runtime.
+/tests          export-ignore
+/.github        export-ignore
+/.gitattributes export-ignore
+/.editorconfig  export-ignore
+/phpunit.xml    export-ignore
+/package.json   export-ignore
+/package-lock.json export-ignore
+/vite.config.js export-ignore
