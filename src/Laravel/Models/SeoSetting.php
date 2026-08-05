@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SilaSeo\Laravel\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use SilaSeo\Laravel\Settings\SettingsRepository;
 
 /**
  * A site-wide SEO setting (the Laravel analogue of the Statamic seo_settings
@@ -26,7 +27,7 @@ class SeoSetting extends Model
 
     protected static function booted(): void
     {
-        static::saved(static fn () => cache()->forget('silaseo.settings'));
-        static::deleted(static fn () => cache()->forget('silaseo.settings'));
+        static::saved(static fn () => cache()->forget(SettingsRepository::CACHE_KEY));
+        static::deleted(static fn () => cache()->forget(SettingsRepository::CACHE_KEY));
     }
 }

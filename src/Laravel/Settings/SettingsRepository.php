@@ -15,7 +15,7 @@ use Throwable;
  */
 final class SettingsRepository
 {
-    private const CACHE_KEY = 'silaseo.settings';
+    public const CACHE_KEY = 'silaseo.settings';
 
     /**
      * @return array<string,mixed>

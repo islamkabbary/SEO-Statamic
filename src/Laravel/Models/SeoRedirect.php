@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SilaSeo\Laravel\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use SilaSeo\Laravel\Redirects\RedirectRepository;
 
 /**
  * A managed redirect or gone (410) rule keyed by source path.
@@ -31,7 +32,9 @@ class SeoRedirect extends Model
 
     protected static function booted(): void
     {
-        static::saved(static fn () => cache()->forget('silaseo.redirects'));
-        static::deleted(static fn () => cache()->forget('silaseo.redirects'));
+        // Keyed off the repository's own constant so the cache key cannot drift
+        // out of sync with the reader and leave stale redirects served forever.
+        static::saved(static fn () => cache()->forget(RedirectRepository::CACHE_KEY));
+        static::deleted(static fn () => cache()->forget(RedirectRepository::CACHE_KEY));
     }
 }
