@@ -20,7 +20,7 @@ final class SilaSeoServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/silaseo.php', 'silaseo');
+        $this->mergeConfigFrom(__DIR__ . '/../../config/silaseo.php', 'silaseo');
 
         $this->app->singleton(SeoRegistry::class);
         $this->app->singleton(SettingsRepository::class);
@@ -39,19 +39,19 @@ final class SilaSeoServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'silaseo');
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'silaseo');
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
 
         $this->registerBladeRendering();
         $this->registerMiddlewareAliases();
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../config/silaseo.php' => config_path('silaseo.php'),
+                __DIR__ . '/../../config/silaseo.php' => config_path('silaseo.php'),
             ], 'silaseo-config');
 
             $this->publishes([
-                __DIR__ . '/../database/migrations' => database_path('migrations'),
+                __DIR__ . '/../../database/migrations' => database_path('migrations'),
             ], 'silaseo-migrations');
         }
     }

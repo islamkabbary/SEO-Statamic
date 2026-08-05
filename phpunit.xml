@@ -8,20 +8,18 @@
          cacheDirectory=".phpunit.cache">
     <testsuites>
         <testsuite name="core">
-            <directory>packages/core/tests</directory>
+            <directory>tests/Core</directory>
         </testsuite>
         <testsuite name="laravel">
-            <directory>packages/laravel/tests</directory>
+            <directory>tests/Laravel</directory>
         </testsuite>
         <testsuite name="statamic">
-            <directory>packages/statamic/tests</directory>
+            <directory>tests/Statamic</directory>
         </testsuite>
     </testsuites>
     <source>
         <include>
-            <directory>packages/core/src</directory>
-            <directory>packages/laravel/src</directory>
-            <directory>packages/statamic/src</directory>
+            <directory>src</directory>
         </include>
     </source>
 </phpunit>

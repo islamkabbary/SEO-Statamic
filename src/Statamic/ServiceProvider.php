@@ -46,8 +46,8 @@ class ServiceProvider extends AddonServiceProvider
      * @var array<string,string>
      */
     protected $routes = [
-        'cp' => __DIR__ . '/../routes/cp.php',
-        'web' => __DIR__ . '/../routes/web.php',
+        'cp' => __DIR__ . '/../../routes/cp.php',
+        'web' => __DIR__ . '/../../routes/web.php',
     ];
 
     public function register(): void
@@ -61,8 +61,8 @@ class ServiceProvider extends AddonServiceProvider
 
     public function bootAddon(): void
     {
-        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'silaseo');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'silaseo');
+        $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'silaseo');
+        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'silaseo');
 
         $router = $this->app['router'];
         $router->pushMiddlewareToGroup('web', \SilaSeo\Statamic\Http\Middleware\HandleRedirects::class);
@@ -77,7 +77,7 @@ class ServiceProvider extends AddonServiceProvider
         $this->bootNav();
 
         $this->publishes([
-            __DIR__ . '/../resources/fieldsets/seo.yaml' => resource_path('fieldsets/seo.yaml'),
+            __DIR__ . '/../../resources/fieldsets/seo.yaml' => resource_path('fieldsets/seo.yaml'),
         ], 'silaseo-fieldset');
     }
 
