@@ -39,7 +39,7 @@ class ServiceProvider extends AddonServiceProvider
         'input' => [
             'resources/js/cp.js',
         ],
-        'publicDirectory' => 'packages/statamic/resources/dist',
+        'publicDirectory' => 'resources/dist',
     ];
 
     /**

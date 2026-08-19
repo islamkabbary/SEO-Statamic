@@ -22,18 +22,18 @@
         "psr-4": {
             "SilaSeo\\Core\\": "packages/core/src/",
             "SilaSeo\\Laravel\\": "packages/laravel/src/",
-            "SilaSeo\\Statamic\\": "packages/statamic/src/"
+            "SilaSeo\\Statamic\\": "src/"
         },
         "files": [
             "packages/laravel/src/helpers.php",
-            "packages/statamic/src/helpers.php"
+            "src/helpers.php"
         ]
     },
     "autoload-dev": {
         "psr-4": {
             "SilaSeo\\Core\\Tests\\": "packages/core/tests/",
             "SilaSeo\\Laravel\\Tests\\": "packages/laravel/tests/",
-            "SilaSeo\\Statamic\\Tests\\": "packages/statamic/tests/"
+            "SilaSeo\\Statamic\\Tests\\": "tests/"
         }
     },
     "extra": {
