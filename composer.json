@@ -1,32 +1,58 @@
 {
-    "name": "silaseo/monorepo",
-    "description": "SilaSEO — reusable in-house SEO toolkit for the Statamic fleet (monorepo dev root). Consumed by host projects via a path repository over packages/*.",
-    "type": "project",
+    "name": "silaseo/statamic",
+    "description": "In-house SEO toolkit for the Statamic fleet.",
+    "type": "statamic-addon",
     "license": "proprietary",
     "require": {
         "php": "^8.1",
-        "silaseo/core": "@dev",
-        "silaseo/laravel": "@dev"
+        "illuminate/support": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/database": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/http": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "illuminate/view": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+        "statamic/cms": "^4.0 || ^5.0 || ^6.0"
     },
     "require-dev": {
         "orchestra/testbench": "^9.0",
         "phpunit/phpunit": "^10.5"
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "packages/*"
-        }
-    ],
+    "suggest": {
+        "khaled.alshamaa/ar-php": "Arabic content analysis: readability, harakat/alef normalization, slug transliteration."
+    },
+    "autoload": {
+        "psr-4": {
+            "SilaSeo\\Core\\": "packages/core/src/",
+            "SilaSeo\\Laravel\\": "packages/laravel/src/",
+            "SilaSeo\\Statamic\\": "packages/statamic/src/"
+        },
+        "files": [
+            "packages/laravel/src/helpers.php",
+            "packages/statamic/src/helpers.php"
+        ]
+    },
     "autoload-dev": {
         "psr-4": {
             "SilaSeo\\Core\\Tests\\": "packages/core/tests/",
             "SilaSeo\\Laravel\\Tests\\": "packages/laravel/tests/",
-            "SilaSeo\\Statamic\\": "packages/statamic/src/",
             "SilaSeo\\Statamic\\Tests\\": "packages/statamic/tests/"
         }
     },
-    "minimum-stability": "dev",
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SilaSeo\\Statamic\\ServiceProvider",
+                "SilaSeo\\Laravel\\SilaSeoServiceProvider"
+            ],
+            "aliases": {
+                "Seo": "SilaSeo\\Laravel\\Facades\\Seo"
+            }
+        },
+        "statamic": {
+            "name": "SilaSeo",
+            "slug": "silaseo",
+            "description": "In-house SEO toolkit for Statamic."
+        }
+    },
+    "minimum-stability": "stable",
     "prefer-stable": true,
     "config": {
         "sort-packages": true
