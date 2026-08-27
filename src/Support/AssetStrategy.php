@@ -12,21 +12,33 @@ namespace SilaSeo\Statamic\Support;
  * both run Vue 2.7 and expose no `__STATAMIC__` global, so loading it there
  * throws before anything renders.
  *
- * Until a Vue 2 build exists there are only two honest outcomes, so there are
- * only two cases here. When that build lands, add a LegacyScript case and teach
- * {@see for()} to return it -- nothing else in the addon needs to change.
+ * So there are three outcomes: Statamic 6+ loads the Vue 3 bundle through Vite;
+ * Statamic 4/5 load a pre-built Vue 2.7 bundle -- the same components compiled for the
+ * 2.7 Control Panel -- as a plain script; an undetermined version ships nothing, because
+ * guessing wrong would load an incompatible bundle and break the panel before it renders.
  */
 enum AssetStrategy
 {
     /** Statamic 6+: register the Vue 3 bundle through Vite. */
     case Vite;
 
-    /** Statamic 4/5, or an undetermined version: ship no Control Panel JavaScript. */
+    /** Statamic 4/5: ship the pre-built Vue 2.7 bundle as a plain Control Panel script. */
+    case LegacyScript;
+
+    /** An undetermined version: ship no Control Panel JavaScript. */
     case None;
 
     public static function for(?int $major): self
     {
-        return $major !== null && $major >= 6 ? self::Vite : self::None;
+        if ($major === null) {
+            return self::None;
+        }
+
+        if ($major >= 6) {
+            return self::Vite;
+        }
+
+        return $major === 4 || $major === 5 ? self::LegacyScript : self::None;
     }
 
     public static function current(): self
@@ -45,6 +57,6 @@ enum AssetStrategy
      */
     public function shipsVueComponents(): bool
     {
-        return $this === self::Vite;
+        return $this === self::Vite || $this === self::LegacyScript;
     }
 }

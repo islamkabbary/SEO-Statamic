@@ -44,7 +44,7 @@
 </template>
 
 <script>
-import { FieldtypeMixin } from '@statamic/cms';
+import FieldtypeMixin from '#fieldtype-mixin';
 import SerpPreview from './serp-preview.vue';
 import SocialPreview from './social-preview.vue';
 
@@ -52,6 +52,11 @@ export default {
     mixins: [FieldtypeMixin],
 
     components: { SerpPreview, SocialPreview },
+
+    // Provided by Statamic's PublishContainer (provide: { storeName }). Present on
+    // Statamic 4/5, where the whole publish-form values live in the Vuex store; harmless
+    // on 6, where FieldtypeMixin exposes this.values directly and storeName stays null.
+    inject: { storeName: { default: null } },
 
     data() {
         return {
@@ -68,7 +73,13 @@ export default {
 
     computed: {
         formValues() {
-            return this.values || {};
+            // Statamic 6: FieldtypeMixin exposes the whole publish-form values object.
+            if (this.values) return this.values;
+
+            // Statamic 4/5: read them from the reactive Vuex publish store, keyed by the
+            // injected storeName (same path core's SlugFieldtype uses to read siblings).
+            const publish = this.storeName && this.$store && this.$store.state.publish[this.storeName];
+            return (publish && publish.values) || {};
         },
         rtl() {
             return (this.meta.locale || '').slice(0, 2) === 'ar';
@@ -100,7 +111,9 @@ export default {
     },
 
     watch: {
-        values: {
+        // Watch the resolved values (this.values on 6, the store slice on 4/5) so the
+        // panel re-analyses on any sibling-field edit regardless of Control Panel version.
+        formValues: {
             deep: true,
             handler() {
                 this.queueAnalysis();
@@ -133,7 +146,7 @@ export default {
             }
 
             http.post(this.meta.link_endpoint, {
-                values: this.values,
+                values: this.formValues,
                 locale: this.meta.locale,
                 id: this.formValues.id,
             })
@@ -153,7 +166,7 @@ export default {
             this.loading = true;
 
             http.post(this.meta.endpoint, {
-                values: this.values,
+                values: this.formValues,
                 locale: this.meta.locale,
                 page_type: this.meta.page_type,
             })

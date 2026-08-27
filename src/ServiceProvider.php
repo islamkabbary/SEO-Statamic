@@ -67,18 +67,34 @@ class ServiceProvider extends AddonServiceProvider
         'publicDirectory' => 'resources/dist',
     ];
 
+    /**
+     * Pre-built Vue 2.7 bundle for the Statamic 4/5 Control Panel. AddonServiceProvider
+     * publishes it to public/vendor/seo/js/cp-legacy.js and emits it via Statamic::script().
+     *
+     * @var list<string>
+     */
+    private const LEGACY_SCRIPTS = [
+        __DIR__ . '/../resources/dist-legacy/js/cp-legacy.js',
+    ];
+
     public function register(): void
     {
-        // The Control Panel bundle is compiled against Statamic 6 -- it reads the
+        // The committed Vite bundle is compiled against Statamic 6 -- it reads the
         // __STATAMIC__ global and Vue 3 APIs, neither of which exists in the Vue 2.7
-        // Control Panel of Statamic 4 and 5. Registering it there would fail at load.
+        // Control Panel of Statamic 4 and 5. There a separate pre-built Vue 2.7 bundle --
+        // the same components compiled for the 2.7 CP -- ships as a plain script instead;
+        // an undetermined version ships nothing.
         //
         // $fieldtypes is deliberately NOT gated the same way: an unregistered handle
         // makes FieldtypeRepository::find() throw, which would break the publish form
         // of every blueprint importing the SEO fieldset. SeoReport degrades to a
-        // display-only component instead.
-        if (AssetStrategy::current()->shipsVueComponents()) {
+        // display-only component when nothing ships.
+        $strategy = AssetStrategy::current();
+
+        if ($strategy === AssetStrategy::Vite) {
             $this->vite = self::VITE_CONFIG;
+        } elseif ($strategy === AssetStrategy::LegacyScript) {
+            $this->scripts = self::LEGACY_SCRIPTS;
         }
 
         parent::register();

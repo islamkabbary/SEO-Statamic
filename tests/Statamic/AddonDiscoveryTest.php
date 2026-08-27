@@ -158,6 +158,7 @@ final class AddonDiscoveryTest extends TestCase
             'translations' => ['resources/lang'],
             'fieldset' => ['resources/fieldsets/seo.yaml'],
             'vite manifest' => ['resources/dist/build/manifest.json'],
+            'legacy cp bundle' => ['resources/dist-legacy/js/cp-legacy.js'],
             'cp routes' => ['routes/cp.php'],
             'web routes' => ['routes/web.php'],
             // formatPackage() reads this from the resolved directory.

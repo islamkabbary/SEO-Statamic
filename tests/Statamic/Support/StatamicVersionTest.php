@@ -88,9 +88,9 @@ final class StatamicVersionTest extends TestCase
     public static function strategies(): array
     {
         return [
-            'statamic 4 has a Vue 2 control panel' => [4, AssetStrategy::None],
-            'statamic 5 has a Vue 2 control panel' => [5, AssetStrategy::None],
-            'statamic 6 has a Vue 3 control panel' => [6, AssetStrategy::Vite],
+            'statamic 4 ships the Vue 2.7 bundle' => [4, AssetStrategy::LegacyScript],
+            'statamic 5 ships the Vue 2.7 bundle' => [5, AssetStrategy::LegacyScript],
+            'statamic 6 ships the Vue 3 bundle' => [6, AssetStrategy::Vite],
             'a future major is assumed forward compatible' => [7, AssetStrategy::Vite],
             'unknown ships nothing' => [null, AssetStrategy::None],
         ];
@@ -104,16 +104,20 @@ final class StatamicVersionTest extends TestCase
         self::assertSame($expected, AssetStrategy::for($major));
     }
 
-    public function test_only_the_vite_strategy_ships_vue_components(): void
+    public function test_both_bundle_strategies_ship_vue_components_and_none_does_not(): void
     {
         self::assertTrue(AssetStrategy::Vite->shipsVueComponents());
+        self::assertTrue(AssetStrategy::LegacyScript->shipsVueComponents());
         self::assertFalse(AssetStrategy::None->shipsVueComponents());
     }
 
     public function test_the_current_strategy_follows_the_detected_version(): void
     {
         StatamicVersion::swap(4);
-        self::assertSame(AssetStrategy::None, AssetStrategy::current());
+        self::assertSame(AssetStrategy::LegacyScript, AssetStrategy::current());
+
+        StatamicVersion::swap(5);
+        self::assertSame(AssetStrategy::LegacyScript, AssetStrategy::current());
 
         StatamicVersion::swap(6);
         self::assertSame(AssetStrategy::Vite, AssetStrategy::current());
