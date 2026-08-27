@@ -1,6 +1,13 @@
 title: SEO
 fields:
   -
+    handle: seo_focus_keyword
+    field:
+      type: text
+      display: 'Focus Keyword'
+      localizable: true
+      instructions: 'The phrase this page should rank for. Drives the keyword checks in the SEO analysis and the internal-link suggestions.'
+  -
     handle: seo_title
     field:
       type: text
@@ -55,3 +62,9 @@ fields:
       display: 'Schema JSON-LD override'
       localizable: true
       instructions: 'Optional. Paste raw JSON-LD (a single object, an array, or a @graph). When set, it replaces the auto-generated node. Invalid JSON is ignored.'
+  -
+    handle: seo_report
+    field:
+      type: seo_report
+      display: 'SEO Analysis'
+      localizable: false

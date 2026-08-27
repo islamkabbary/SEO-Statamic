@@ -6,7 +6,9 @@ namespace SilaSeo\Statamic\Link;
 
 use Illuminate\Support\Facades\Cache;
 use SilaSeo\Core\Link\LinkTarget;
+use SilaSeo\Statamic\Fields\FieldResolver;
 use Statamic\Facades\Entry;
+use Statamic\Facades\Site;
 use Throwable;
 
 /**
@@ -21,9 +23,14 @@ use Throwable;
  */
 final class EntryLinkCorpus
 {
-    private const CACHE_KEY = 'silaseo.link_corpus';
+    private const CACHE_PREFIX = 'silaseo.link_corpus';
+    private const GENERATION_KEY = self::CACHE_PREFIX . '.generation';
     private const CACHE_TTL = 600;
     private const MAX_TARGETS = 1000;
+
+    public function __construct(private readonly ?FieldResolver $resolver = null)
+    {
+    }
 
     /**
      * @return list<LinkTarget>
@@ -31,18 +38,90 @@ final class EntryLinkCorpus
     public function targets(): array
     {
         try {
-            return Cache::remember(self::CACHE_KEY, self::CACHE_TTL, fn (): array => $this->build());
+            return Cache::remember($this->cacheKey(), self::CACHE_TTL, fn (): array => $this->build());
         } catch (Throwable) {
             return $this->build();
+        }
+    }
+
+    /**
+     * Everything that changes what {@see build()} returns.
+     *
+     * This used to be one global key. The corpus filters by locale, and on the
+     * projects whose locale comes from the session that meant whichever language
+     * happened to warm the cache was served to everyone for the next ten minutes.
+     * Site, locale, strategy, field profile and URL origin all change the result,
+     * so all five are in the key.
+     */
+    private function cacheKey(): string
+    {
+        $strategy = $this->resolver?->localeStrategy();
+
+        return implode('.', [
+            self::CACHE_PREFIX,
+            'g' . $this->generation(),
+            $this->siteHandle(),
+            $strategy?->current() ?? 'unknown',
+            $strategy?->name() ?? 'none',
+            $this->resolver?->map()->signature() ?? 'default',
+            substr(hash('xxh128', $this->origin()), 0, 8),
+        ]);
+    }
+
+    /**
+     * Bumped whenever content or configuration changes.
+     *
+     * A generation counter rather than a key registry or cache tags: every key
+     * derived from it is invalidated at once, and it works on every cache store,
+     * including the file and database drivers that do not support tagging.
+     */
+    private function generation(): int
+    {
+        try {
+            $generation = Cache::get(self::GENERATION_KEY);
+
+            return is_numeric($generation) ? (int) $generation : 1;
+        } catch (Throwable) {
+            return 1;
         }
     }
 
     public static function flush(): void
     {
         try {
-            Cache::forget(self::CACHE_KEY);
+            $current = Cache::get(self::GENERATION_KEY);
+            Cache::forever(self::GENERATION_KEY, (is_numeric($current) ? (int) $current : 1) + 1);
         } catch (Throwable) {
-            // Cache store unavailable; nothing to flush.
+            // Cache store unavailable; entries expire on their own TTL.
+        }
+    }
+
+    private function siteHandle(): string
+    {
+        try {
+            return (string) (Site::current()?->handle() ?? 'default');
+        } catch (Throwable) {
+            return 'default';
+        }
+    }
+
+    /**
+     * Target URLs are absolute, so a multi-domain install must not share a corpus.
+     */
+    private function origin(): string
+    {
+        if (! function_exists('url')) {
+            return '';
+        }
+
+        try {
+            $current = (string) url()->current();
+            $scheme = parse_url($current, PHP_URL_SCHEME);
+            $host = parse_url($current, PHP_URL_HOST);
+
+            return is_string($scheme) && is_string($host) ? $scheme . '://' . $host : '';
+        } catch (Throwable) {
+            return '';
         }
     }
 
@@ -123,8 +202,15 @@ final class EntryLinkCorpus
             return null;
         }
 
-        $title = $this->firstFilled($this->value($entry, 'seo_title'), $this->value($entry, 'title'));
-        $focusKeyword = trim($this->value($entry, 'seo_focus_keyword'));
+        // Through the resolver so a project whose title lives in `title_ar` builds
+        // an Arabic corpus rather than an empty one.
+        $title = (string) ($this->resolver?->string($entry, 'title') ?? $this->firstFilled(
+            $this->value($entry, 'seo_title'),
+            $this->value($entry, 'title'),
+        ));
+
+        $focusKeyword = trim((string) ($this->resolver?->string($entry, 'focus_keyword')
+            ?? $this->value($entry, 'seo_focus_keyword')));
 
         $keyphrases = [];
 
@@ -148,6 +234,13 @@ final class EntryLinkCorpus
     private function isNoindex(object $entry): bool
     {
         try {
+            if ($this->resolver !== null) {
+                // An unmapped `robots` is false, never a stray read of some other
+                // handle -- a project without a noindex toggle must not have pages
+                // silently dropped from the corpus.
+                return $this->resolver->bool($entry, 'robots');
+            }
+
             return method_exists($entry, 'value') && (bool) $entry->value('seo_noindex');
         } catch (Throwable) {
             return false;
