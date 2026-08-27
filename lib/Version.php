@@ -16,7 +16,7 @@ namespace SilaSeo;
  */
 final class Version
 {
-    public const CURRENT = '1.0.0';
+    public const CURRENT = '2.1.0';
 
     public static function current(): string
     {

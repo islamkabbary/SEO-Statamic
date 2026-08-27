@@ -3,7 +3,13 @@
     "description": "SilaSEO — in-house SEO toolkit for Statamic: meta/OG/Twitter, canonical, hreflang, JSON-LD schema, sitemap, redirects, 404 monitor, content analysis, internal-link suggestions, and IndexNow. Supports Statamic 4/5/6 on Laravel 10-13.",
     "type": "statamic-addon",
     "license": "proprietary",
-    "keywords": ["statamic", "statamic-addon", "seo", "schema", "hreflang"],
+    "keywords": [
+        "statamic",
+        "statamic-addon",
+        "seo",
+        "schema",
+        "hreflang"
+    ],
     "require": {
         "php": "^8.1",
         "illuminate/database": "^10.0 || ^11.0 || ^12.0 || ^13.0",
@@ -13,8 +19,8 @@
         "statamic/cms": "^4.0 || ^5.0 || ^6.0"
     },
     "require-dev": {
-        "orchestra/testbench": "^8.0 || ^9.0 || ^10.0",
-        "phpunit/phpunit": "^10.5"
+        "orchestra/testbench": "^10.8",
+        "phpunit/phpunit": "^11.5"
     },
     "suggest": {
         "khaled.alshamaa/ar-php": "Improved Arabic content analysis: readability, harakat/alef normalization, slug transliteration."
