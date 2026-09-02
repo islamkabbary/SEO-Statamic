@@ -6,6 +6,7 @@ namespace SilaSeo\Statamic;
 
 use SilaSeo\Core\Schema\Types\Article;
 use SilaSeo\Core\Schema\Types\BlogPosting;
+use SilaSeo\Statamic\Schema\RawMetaParser;
 
 /**
  * Pure mapping from a Statamic entry's extracted SEO field values to a cascade
@@ -14,6 +15,11 @@ use SilaSeo\Core\Schema\Types\BlogPosting;
  */
 final class EntryMapper
 {
+    public function __construct(
+        private readonly RawMetaParser $rawMeta = new RawMetaParser(),
+    ) {
+    }
+
     /**
      * @param array<string,mixed> $fields  seo_title, seo_description, seo_image(url), seo_canonical, noindex(bool), schema_json(raw JSON-LD string)
      * @param array<string,mixed> $context fallback_title, fallback_image, url, locale, schema_type
@@ -73,9 +79,16 @@ final class EntryMapper
     }
 
     /**
-     * Decode an editor-supplied raw JSON-LD override into one or more nodes. A
-     * single object, a bare array of objects, or a `@graph` wrapper are accepted;
-     * invalid JSON is ignored so a typo never breaks the page head.
+     * Decode an editor-supplied raw JSON-LD override into one or more nodes.
+     *
+     * Editors paste whatever a schema generator hands them: a bare object, a bare
+     * array, a `@graph` wrapper, or -- most commonly -- a full
+     * `<script type="application/ld+json">...</script>` block copied verbatim.
+     * Accepting only bare JSON silently dropped the wrapped form, so the auto node
+     * kept rendering and the override looked like it did nothing. Parsing is
+     * delegated to {@see RawMetaParser}, which unwraps the script tag (and CDATA /
+     * entity-encoded markup), keeps only nodes carrying an `@type`, and never
+     * throws -- a typo yields no node rather than a broken page head.
      *
      * @return list<array<string,mixed>>
      */
@@ -85,22 +98,7 @@ final class EntryMapper
             return [];
         }
 
-        $decoded = json_decode($raw, true);
-
-        if (! is_array($decoded)) {
-            return [];
-        }
-
-        if (isset($decoded['@graph']) && is_array($decoded['@graph'])) {
-            $decoded = $decoded['@graph'];
-        }
-
-        $nodes = array_is_list($decoded) ? $decoded : [$decoded];
-
-        return array_values(array_filter(
-            $nodes,
-            static fn (mixed $node): bool => is_array($node) && isset($node['@type']),
-        ));
+        return $this->rawMeta->parse($raw)['schema'];
     }
 
     /**
