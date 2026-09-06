@@ -56,18 +56,10 @@ the Control Panel assets are shipped per version.
 
 ## Installation
 
-The package is distributed from a Git repository. Add it as a Composer VCS repository,
-then require it.
+The package is published on [Packagist](https://packagist.org/packages/silaseo/seo),
+so a single Composer command installs it — no custom repository entry required.
 
-**1. Add the repository** to your project's `composer.json`:
-
-```json
-"repositories": [
-    { "type": "vcs", "url": "https://github.com/islamkabbary/SEO-Statamic.git" }
-]
-```
-
-**2. Require the package:**
+**1. Require the package:**
 
 ```bash
 composer require silaseo/seo
@@ -75,13 +67,13 @@ composer require silaseo/seo
 
 The service providers and the `Seo` facade are auto-discovered — no manual registration.
 
-**3. Publish the Control Panel assets** (required so the analysis panel renders):
+**2. Publish the Control Panel assets** (required so the analysis panel renders):
 
 ```bash
 php artisan vendor:publish --provider="SilaSeo\Statamic\ServiceProvider" --force
 ```
 
-**4. Publish what you need** (all optional):
+**3. Publish what you need** (all optional):
 
 ```bash
 # Configuration file -> config/silaseo.php
