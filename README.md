@@ -22,6 +22,7 @@ that runs on **Statamic 4, 5 and 6**.
 - [Multilingual & hreflang](#multilingual--hreflang)
 - [Using it in plain Laravel](#using-it-in-plain-laravel)
 - [Statamic 4 / 5 / 6 support](#statamic-4--5--6-support)
+- [Troubleshooting](#troubleshooting)
 - [Development](#development)
 - [License](#license)
 
@@ -95,20 +96,34 @@ php artisan vendor:publish --tag=silaseo-migrations
 
 ### 1. Add the SEO fields to your blueprints
 
-Import the shipped fieldset into any collection or page blueprint:
+**This step is required, and it is per-blueprint.** Nothing is injected automatically —
+the fields and the analysis panel appear only in the blueprints that import the fieldset.
+Repeat it for **every** collection you want SEO on (pages, blogs, courses, …).
+
+Import the whole shipped fieldset with a single `- import: seo` line. Give it its own tab
+for a clean **SEO** tab in the publish form:
 
 ```yaml
-# resources/blueprints/collections/pages/page.yaml
+# resources/blueprints/collections/blogs/blog.yaml
 tabs:
   main:
+    # ... your content sections ...
+  seo:
+    display: SEO
     sections:
       -
         fields:
-          - import: seo
+          - import: seo    # ← brings ALL the SEO fields + the analysis panel
 ```
 
-This adds the [SEO fields](#seo-fields) and the live [analysis panel](#the-seo-analysis-panel)
-to the publish form.
+> **Import the fieldset, not just the report field.** `- import: seo` pulls in the full
+> [SEO fields](#seo-fields) (focus keyword, title, description, image, canonical, noindex,
+> schema) **and** the live [analysis panel](#the-seo-analysis-panel). If you add only the
+> `seo_report` field, the tab shows the analysis panel with nothing to fill in — the panel
+> reads those input fields, so it needs them present.
+
+If a `seo` tab already exists but is **empty** (`sections: [ {} ]`), that is why the tab
+looks blank or missing — replace the empty section with the `- import: seo` block above.
 
 ### 2. Render the SEO `<head>`
 
@@ -440,6 +455,48 @@ The correct bundle is chosen automatically from the running Statamic major versi
 only ever run the publish command. Both bundles are committed, so **consumers never need
 Node or npm.** If the version can't be determined, no CP script is shipped and the field
 degrades to a display-only label (the rest of the publish form is unaffected).
+
+---
+
+## Troubleshooting
+
+### The SEO tab is empty or doesn't show up in a collection
+
+The blueprint isn't importing the fieldset. The fields and panel are **never** injected
+automatically — each blueprint that needs SEO must import it. Open the collection's
+blueprint (e.g. `resources/blueprints/collections/blogs/blog.yaml`) and make sure the
+`seo` tab imports the fieldset:
+
+```yaml
+  seo:
+    display: SEO
+    sections:
+      -
+        fields:
+          - import: seo
+```
+
+A tab defined as `sections: [ {} ]` (an empty section) renders blank — that's the usual
+cause. See [Quick start → step 1](#1-add-the-seo-fields-to-your-blueprints).
+
+### The SEO tab shows the analysis panel but no fields to fill in
+
+You added the `seo_report` field on its own. Use the full `- import: seo` so the input
+fields (focus keyword, title, description, image, canonical, …) come in with it — the
+panel analyses those fields, so they must be present.
+
+### The panel renders as a plain grey label (no score, no previews)
+
+The Control Panel assets weren't published (or are stale after an update). Re-run:
+
+```bash
+php artisan vendor:publish --provider="SilaSeo\Statamic\ServiceProvider" --force
+```
+
+This copies the correct bundle for your Statamic version into `public/vendor/seo/`.
+On a **server** deployment, run this on the server after each pull/update — the built
+assets live under `public/` and aren't something you build locally; a `git pull` alone
+won't refresh them. Then hard-refresh the Control Panel so the browser drops the old script.
 
 ---
 
