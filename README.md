@@ -125,6 +125,63 @@ tabs:
 If a `seo` tab already exists but is **empty** (`sections: [ {} ]`), that is why the tab
 looks blank or missing — replace the empty section with the `- import: seo` block above.
 
+#### …or add it from the Control Panel UI (Statamic 4 / 5)
+
+If you would rather not touch YAML, the blueprint builder in the Control Panel does exactly
+the same thing — it writes the `import: seo` line into the blueprint file for you. This
+walkthrough matches the **Statamic 4 and 5** builder (the one with **Link Existing** /
+**Create Field** buttons). Statamic 6 is the same idea with slightly different labels.
+
+**A. Open the blueprint editor**
+
+1. Sign in to the Control Panel at `https://<your-domain>/cp`.
+2. In the left sidebar open **Fields → Blueprints**.
+   (Alternatively: **Collections → Blogs**, then the **⋯** menu at the top right → **Edit Blueprint**.)
+3. Under the **Collections** group, click your collection (e.g. **Blogs**), then open its
+   blueprint (e.g. **Blog**). You are now on the **Edit Blueprint** screen with a tab bar:
+   `En · Ar · Card · SEO · Sidebar`.
+
+**B. Get to (or create) the SEO tab**
+
+4. Click the **SEO** tab. If there is no SEO tab yet, click the **+** at the right end of the
+   tab bar and name the new tab `SEO`.
+5. Inside the tab you'll see a section card (it may be called **New Section**) with the hint
+   *"Add or drag fields here"* and two buttons under it: **Link Existing** and **Create Field**.
+   - Optional: click the **pencil ✏️** on the section header to give it a clearer name.
+   - **If the section already contains a lone `Seo Report` field, delete it first** (hover the
+     field → **trash 🗑**). You want the *whole* fieldset, not just the report — see the note
+     above.
+
+**C. Import the whole fieldset**
+
+6. Click **Link Existing** (the button with the 🔗 chain icon — this is what older docs call
+   *"Import Fieldset"*). **Do not** use **Create Field**; that builds a brand-new field instead
+   of pulling in ours.
+7. A modal opens listing your fieldsets. Find and select the one named **SEO** (handle `seo`).
+8. Choose **Import whole fieldset** (the import action shown next to the fieldset's name) —
+   **not** the individual fields underneath it. This is the important part:
+   - **Import whole fieldset** → writes a single `import: seo` reference. You get all SEO
+     fields **and** the analysis panel, and the blueprint stays linked to the fieldset, so any
+     future change to the fieldset flows through automatically.
+   - **Picking fields one by one** → links each field separately and does *not* stay in sync
+     with the fieldset. Avoid this.
+9. Close the modal. The section now shows the imported **SEO** fieldset as a single card
+   (its fields are pulled in from the fieldset, so you won't edit them individually here).
+
+**D. Save**
+
+10. Click **Save** at the top right of the Edit Blueprint screen. (Nothing is written until you
+    press Save — leaving the page without saving discards the import.)
+11. Open any entry in that collection and switch to the **SEO** tab. You should now see the
+    focus keyword, SEO title, meta description, share image, canonical, noindex and schema
+    fields, followed by the live analysis panel (score, checklist, SERP & social previews).
+
+> **On a server / when you deploy with `git pull`:** the builder saves your change straight
+> into `resources/blueprints/collections/<collection>/<blueprint>.yaml` **on that server**. If
+> your deployment overwrites `resources/` from git, the next deploy will wipe this edit — so
+> also add the same `- import: seo` block to the blueprint in your project repo (or commit the
+> file the CP just wrote) to make it permanent.
+
 ### 2. Render the SEO `<head>`
 
 Apply the site-wide settings and the current entry, then output the head. The cleanest
